@@ -1,22 +1,79 @@
-# Codex 상세페이지 생성기
+# Page Studio AI · Codex 상세페이지 생성기
 
-## 홈페이지에서 바로 만들기
+상품 정보와 대표 사진을 바탕으로 **13개 전환 섹션의 한국어 상세페이지**를 만들고 편집하는 프로젝트입니다.
+
+- GitHub Pages 웹 편집기: 상품 입력 → AI 카피 → 섹션 편집 → AI 이미지 → HTML 다운로드
+- Google Apps Script 백엔드: OpenAI API 키 보호 + Google Drive 저장
+- Codex 제작 파이프라인: 리서치 → 카피 → 디자인 → 13개 이미지 → PNG/PDF 조립
+
+## 웹앱
 
 **[Page Studio 열기](https://jskimlam.github.io/landing-page-generator-codex/)**
 
-상품 정보와 사진을 입력한 뒤 `13개 섹션 초안 만들기`를 누르세요. 문구 수정, 섹션 숨기기, 3가지 색상, 모바일 미리보기, 사진이 포함된 HTML 다운로드를 지원합니다. 구매 링크를 입력하면 결과물의 버튼으로 이동할 수 있습니다.
+웹앱은 다음을 지원합니다.
 
-홈페이지는 입력 내용을 템플릿에 배치하는 브라우저 편집기입니다. AI 카피·이미지 생성은 아직 연결되지 않았습니다. 입력 정보와 사진을 서버로 보내지 않으며 새로고침하면 작업이 사라지므로 먼저 HTML을 다운로드하세요. 웹 편집기는 HTML 다운로드를 지원하며 PNG/PDF는 아래 Codex 제작 흐름에서 제공합니다.
+- Hero → Pain → Problem → Story → Solution → How → Proof → Authority → Benefits → Risk → Comparison → Target → CTA의 13개 섹션
+- OpenAI Responses API 기반 AI 카피 생성
+- 대표 상품사진을 참조한 섹션별 AI 이미지 생성
+- 섹션 표시/숨김, 제목/본문/이미지 프롬프트 직접 편집
+- 데스크톱/모바일 미리보기
+- 현재 결과 HTML 다운로드
+- 생성 이미지를 Google Drive에 즉시 저장
+- `Drive 저장`으로 `project.json`, `detail-page.html`, 원본 상품사진을 프로젝트 폴더에 저장
 
-GitHub Pages는 `main` 브랜치의 `/ (root)`로 배포합니다. `index.html`, `studio.css`, `studio.js`는 빌드나 API 키 없이 작동합니다. 웹 기능 검증: `node --test tests/studio.test.cjs`.
+API 키는 브라우저나 GitHub에 넣지 않습니다. AI/Drive 기능은 `apps-script/` 백엔드를 먼저 배포해야 합니다.
 
-제품 정보를 받아 **기획 → 리서치 → 카피 → 디자인 → 이미지 생성 → PNG/PDF 조립**을 Codex에서 진행합니다. 원본의 13개 섹션 및 카피·디자인 가이드를 보존하고 Codex용으로 전환했습니다.
+## AI + Google Drive 연결
 
-## 시작하기
+Google Apps Script에서 새 프로젝트를 만들고 `apps-script/Code.gs`를 붙여넣은 뒤 웹 앱으로 배포합니다. 먼저 편집기에서 `setupPageStudio()`를 한 번 실행하면 Drive 권한 승인과 `상세페이지` 폴더 생성, 임의 `APP_TOKEN` 생성이 이뤄집니다. 그 다음 **프로젝트 설정 → 스크립트 속성**에 최소 다음 값을 확인/추가합니다.
 
-1. 이 저장소를 다운로드하거나 복제한 뒤 **저장소 폴더 자체를 Codex 프로젝트로 열어주세요**.
-2. Python 3.10 이상 환경에서 `python -m pip install -r requirements.txt`를 실행합니다. Codex에 설치를 요청해도 됩니다.
-3. Codex에 아래처럼 요청합니다.
+- `OPENAI_API_KEY`: OpenAI API 키
+- `APP_TOKEN`: `setupPageStudio()` 실행 로그에 표시된 토큰 또는 직접 만든 긴 임의 문자열
+
+웹 앱은 **실행 사용자: 나**로 배포하고, `/exec` URL을 Page Studio의 `AI · Google Drive 연결`에 입력합니다. 조직 또는 브라우저 정책에 따라 GitHub Pages→Apps Script 교차 출처 요청이 차단될 수 있는 환경에서는 별도 서버리스 프록시 또는 Apps Script HTML Service 호스팅이 필요할 수 있습니다.
+
+기본 텍스트 모델은 `gpt-5.6-luna`이며 `OPENAI_TEXT_MODEL`/`OPENAI_IMAGE_CALLER_MODEL` Script Property로 변경할 수 있습니다. 이미지는 Responses API의 `image_generation` 도구를 사용하며, 도구가 지원되는 GPT-5 이상 계열 모델을 호출 모델로 사용합니다.
+
+Drive에는 첫 저장 시 자동으로 다음 구조가 생성됩니다.
+
+```text
+내 드라이브/
+└─ 상세페이지/
+   └─ 상품명_YYYYMMDD_HHMMSS/
+      ├─ original-product.jpg
+      ├─ 01_hero_....png
+      ├─ ...
+      ├─ project.json
+      └─ detail-page.html
+```
+
+## 웹앱 보안 원칙
+
+- OpenAI API 키를 프론트엔드에 저장하지 않음
+- Apps Script의 `APP_TOKEN`으로 공개 엔드포인트 오용 방지
+- 구매 링크는 http/https만 허용
+- 사용자 카피는 HTML escape 처리
+- 업로드 이미지는 JPG/PNG/WebP만 허용
+- 후기, 인증, 판매 수치, 할인, 보장 등을 AI가 임의 생성하지 않도록 백엔드 지침과 Structured Outputs 사용
+
+## 테스트
+
+```sh
+node --test tests/studio.test.cjs
+python -m unittest discover -s tests -v
+```
+
+GitHub Actions에서도 동일한 검증을 실행합니다.
+
+---
+
+# Codex 이미지 기반 제작 흐름
+
+웹앱과 별도로, 저장소를 Codex 프로젝트로 열어 **기획 → 리서치 → 카피 → 디자인 → 이미지 생성 → PNG/PDF 조립**을 진행할 수 있습니다.
+
+1. 저장소 폴더를 Codex 프로젝트로 엽니다.
+2. Python 3.10+ 환경에서 `python -m pip install -r requirements.txt`를 실행합니다.
+3. 아래처럼 요청합니다.
 
 ```text
 이 저장소의 AGENTS.md와 .agents/skills/landing-page-generator/SKILL.md를 읽고 상세페이지를 만들어줘.
@@ -28,39 +85,24 @@ GitHub Pages는 `main` 브랜치의 `/ (root)`로 배포합니다. `index.html`,
 제공한 제품 사진과 실제 가격을 사용하고, 최종 PNG/PDF까지 만들어줘.
 ```
 
-스킬이 목록에 표시되면 `$landing-page-generator`로도 요청할 수 있습니다. 표시되지 않으면 위처럼 경로를 명시하세요. 역할 가이드는 현재 Codex가 순서대로 읽는 문서이며 별도 모델 설치는 필요하지 않습니다.
+주요 결과물:
 
-**이미지 생성 도구가 제공되는 Codex 환경이 필요합니다.** 도구가 없는 환경에서는 카피·디자인·프롬프트까지 작성할 수 있고, 실제 이미지를 준비한 뒤 조립합니다. Python은 Codex 내부 이미지 도구를 직접 호출하지 않습니다. 별도 API 키 없이 현재 Codex의 제공 기능을 사용하며 계정의 이용 한도는 적용됩니다.
+- `output/structured_brief.json`
+- `output/research_output.json`
+- `output/copy_output.json`
+- `output/design_direction.json`
+- `output/image_prompts.json`
+- `output/sections/`
+- `output/final_page.png`
+- `output/final_page.pdf`
+- `output/preview.png`
+- `output/index.html`
 
-## 결과물
-
-- `output/structured_brief.json`, `research_output.json`, `copy_output.json`, `design_direction.json`: 제작 자료
-- `output/image_prompts.json`: 13개 섹션 이미지 프롬프트
-- `output/sections/`: 섹션 PNG 13장
-- `output/final_page.png`, `final_page.pdf`, `preview.png`: 조립 결과
-- `output/index.html`: 섹션 이미지를 보여주는 정적 페이지
-
-이미지 기본 너비는 1200px입니다. 원본 권장 높이 합계는 7,500px이며 생성 이미지 비율에 따라 실제 높이는 달라집니다. HTML의 버튼은 이미지의 일부이므로 결제·문의 기능이 연결되어 있지 않습니다.
-
-## 조립 명령
-
-아래 명령은 저장소 루트에서 실행합니다. 기획·카피·이미지 생성은 Codex가 수행합니다.
+조립:
 
 ```sh
 python .agents/skills/landing-page-generator/scripts/generate_page.py plan --brief output/structured_brief.json --output output
-# Codex에서 프롬프트를 완성하고 13개 PNG 이미지를 output/sections/에 준비
 python .agents/skills/landing-page-generator/scripts/generate_page.py assemble --output output
-python -m unittest discover -s tests -v
 ```
 
-`plan`은 초안 생성 도구이며 기존 프롬프트를 덮어쓰지 않습니다. `assemble`은 누락·손상 이미지가 있으면 실패합니다. JSON 키는 `01_hero`부터 `13_final_cta`까지 스크립트에 정의된 13개 ID입니다.
-
-## GitHub에서의 작동 범위
-
-GitHub Pages에는 정적 웹 편집기가 배포되며 Actions에서 기능 테스트를 실행합니다. Codex 대화와 AI 이미지 생성은 홈페이지에서 자동 실행되지 않습니다. AI 제작은 이 저장소를 연 Codex에서 요청하세요. 생성 결과와 상품의 비공개 자료는 기본적으로 Git에 포함되지 않습니다.
-
-## 원본 및 라이선스
-
-원본: [uxjoseph/landing-page-generator](https://github.com/uxjoseph/landing-page-generator). 원본 README의 **MIT License** 표기를 보존합니다. 상세 출처 및 변경 내역은 [UPSTREAM.md](UPSTREAM.md)에 있습니다.
-
-Codex 스킬 형식 참고: [OpenAI 공식 스킬 문서](https://developers.openai.com/codex/skills).
+원본 기반 13개 섹션 카피/디자인 가이드와 라이선스 정보는 `.agents/skills/landing-page-generator/` 및 `UPSTREAM.md`를 참고하세요.
