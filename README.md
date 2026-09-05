@@ -1,114 +1,56 @@
-# 상세페이지 자동 생성기 (Landing Page Generator)
+# Codex 상세페이지 생성기
 
-AI 에이전트 팀이 제품/서비스 정보를 기반으로 **13개 섹션의 고전환 상세페이지**를 자동 생성합니다.
+제품 정보를 받아 **기획 → 리서치 → 카피 → 디자인 → 이미지 생성 → PNG/PDF 조립**을 Codex에서 진행합니다. 원본의 13개 섹션 및 카피·디자인 가이드를 보존하고 Codex용으로 전환했습니다.
 
-## 특징
+## 시작하기
 
-- **5개 AI 에이전트** 협업 시스템
-- **Gemini API**로 섹션별 이미지 생성
-- **1200px 고정 너비**, 총 ~7,000px 높이
-- **PNG/PDF** 출력 지원
+1. 이 저장소를 다운로드하거나 복제한 뒤 **저장소 폴더 자체를 Codex 프로젝트로 열어주세요**.
+2. Python 3.10 이상 환경에서 `python -m pip install -r requirements.txt`를 실행합니다. Codex에 설치를 요청해도 됩니다.
+3. Codex에 아래처럼 요청합니다.
 
-## 파이프라인
-
-```
-[입력] 제품 정보
-    ↓
-[기획팀] 입력수집 → 리서치
-    ↓
-[카피팀] 13섹션 카피 생성
-    ↓
-[디자인팀] 스타일/컬러 결정
-    ↓
-[개발팀] Gemini 프롬프트 → 이미지 생성 → 스티칭
-    ↓
-[출력] 상세페이지 PNG/PDF
+```text
+이 저장소의 AGENTS.md와 .agents/skills/landing-page-generator/SKILL.md를 읽고 상세페이지를 만들어줘.
+제품명: [내 제품]
+설명: [제품 설명]
+타겟: [주요 고객]
+문제: [해결하는 문제]
+혜택: [확인된 핵심 혜택]
+제공한 제품 사진과 실제 가격을 사용하고, 최종 PNG/PDF까지 만들어줘.
 ```
 
-## 에이전트 구성
+스킬이 목록에 표시되면 `$landing-page-generator`로도 요청할 수 있습니다. 표시되지 않으면 위처럼 경로를 명시하세요. 역할 가이드는 현재 Codex가 순서대로 읽는 문서이며 별도 모델 설치는 필요하지 않습니다.
 
-| 에이전트 | 모델 | 역할 |
-|----------|------|------|
-| `01-intake` | haiku | 필수 정보 수집 |
-| `02-research` | sonnet | 타겟/페인포인트 분석 |
-| `03-copy` | sonnet | 13섹션 카피라이팅 |
-| `04-design-direction` | haiku | 스타일 프리셋 결정 |
-| `05-prompt-generator` | sonnet | Gemini 이미지 프롬프트 |
+**이미지 생성 도구가 제공되는 Codex 환경이 필요합니다.** 도구가 없는 환경에서는 카피·디자인·프롬프트까지 작성할 수 있고, 실제 이미지를 준비한 뒤 조립합니다. Python은 Codex 내부 이미지 도구를 직접 호출하지 않습니다. 별도 API 키 없이 현재 Codex의 제공 기능을 사용하며 계정의 이용 한도는 적용됩니다.
 
-## 13개 섹션 구조
+## 결과물
 
-| # | 섹션 | 높이 | 목적 |
-|---|------|------|------|
-| 01 | Hero | 800px | 첫인상, CTA |
-| 02 | Pain | 600px | 공감 유발 |
-| 03 | Problem | 500px | 원인 제시 |
-| 04 | Story | 700px | Before→After |
-| 05 | Solution | 400px | 제품 소개 |
-| 06 | How It Works | 600px | 프로세스 |
-| 07 | Social Proof | 800px | 후기/증거 |
-| 08 | Authority | 500px | 신뢰 구축 |
-| 09 | Benefits | 700px | 혜택/보너스 |
-| 10 | Risk Removal | 500px | 환불/FAQ |
-| 11 | Comparison | 400px | 최종 대비 |
-| 12 | Target Filter | 400px | 적합성 체크 |
-| 13 | Final CTA | 600px | 행동 유도 |
+- `output/structured_brief.json`, `research_output.json`, `copy_output.json`, `design_direction.json`: 제작 자료
+- `output/image_prompts.json`: 13개 섹션 이미지 프롬프트
+- `output/sections/`: 섹션 PNG 13장
+- `output/final_page.png`, `final_page.pdf`, `preview.png`: 조립 결과
+- `output/index.html`: 섹션 이미지를 보여주는 정적 페이지
 
-## 설치
+이미지 기본 너비는 1200px입니다. 원본 권장 높이 합계는 7,500px이며 생성 이미지 비율에 따라 실제 높이는 달라집니다. HTML의 버튼은 이미지의 일부이므로 결제·문의 기능이 연결되어 있지 않습니다.
 
-```bash
-# 의존성 설치
-pip install -r requirements.txt
+## 조립 명령
 
-# 환경변수 설정
-cp .env.example .env
-# .env 파일에 GEMINI_API_KEY 입력
+아래 명령은 저장소 루트에서 실행합니다. 기획·카피·이미지 생성은 Codex가 수행합니다.
+
+```sh
+python .agents/skills/landing-page-generator/scripts/generate_page.py plan --brief output/structured_brief.json --output output
+# Codex에서 프롬프트를 완성하고 13개 PNG 이미지를 output/sections/에 준비
+python .agents/skills/landing-page-generator/scripts/generate_page.py assemble --output output
+python -m unittest discover -s tests -v
 ```
 
-## 사용법
+`plan`은 초안 생성 도구이며 기존 프롬프트를 덮어쓰지 않습니다. `assemble`은 누락·손상 이미지가 있으면 실패합니다. JSON 키는 `01_hero`부터 `13_final_cta`까지 스크립트에 정의된 13개 ID입니다.
 
-### Claude Code에서 실행
-```
-사용자: 상세페이지 만들어줘
-→ 에이전트가 필수 정보 질문
-→ 자동으로 13섹션 생성
-```
+## GitHub에서의 작동 범위
 
-### 스크립트 직접 실행
-```bash
-# 전체 파이프라인
-python scripts/generate_page.py
+GitHub에는 코드와 스킬이 저장되며 Actions에서 조립 테스트를 실행합니다. GitHub 자체가 Codex 대화나 이미지 생성을 실행하거나 웹앱을 호스팅하는 것은 아닙니다. 이 저장소를 연 Codex에서 실제 제작을 요청하세요. 생성 결과와 상품의 비공개 자료는 기본적으로 Git에 포함되지 않습니다.
 
-# 이미지 스티칭만
-python scripts/stitch_images.py output/sections output/final_page.png
-```
+## 원본 및 라이선스
 
-## 파일 구조
+원본: [uxjoseph/landing-page-generator](https://github.com/uxjoseph/landing-page-generator). 원본 README의 **MIT License** 표기를 보존합니다. 상세 출처 및 변경 내역은 [UPSTREAM.md](UPSTREAM.md)에 있습니다.
 
-```
-detail_page/
-├── SKILL.md                 # 메인 오케스트레이터
-├── prompt.md                # 전체 설계 문서
-├── agents/                  # AI 에이전트 정의
-│   ├── 01-intake.md
-│   ├── 02-research.md
-│   ├── 03-copy.md
-│   ├── 04-design-direction.md
-│   └── 05-prompt-generator.md
-├── scripts/                 # Python 스크립트
-│   ├── generate_page.py     # 전체 파이프라인
-│   ├── gemini_api.py        # Gemini API 호출
-│   └── stitch_images.py     # 이미지 스티칭
-├── references/              # 참조 문서
-└── output/                  # 생성 결과물 (gitignore)
-```
-
-## 기술 스펙
-
-- **이미지 너비**: 1200px (고정)
-- **총 높이**: ~7,000px
-- **API**: Gemini 3.0 Pro
-- **스타일**: 실사 사진 (일러스트 금지)
-
-## 라이선스
-
-MIT License
+Codex 스킬 형식 참고: [OpenAI 공식 스킬 문서](https://developers.openai.com/codex/skills).

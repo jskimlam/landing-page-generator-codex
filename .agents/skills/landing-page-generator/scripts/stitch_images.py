@@ -2,7 +2,7 @@
 섹션별 PNG 이미지를 세로로 이어붙여 최종 상세페이지를 생성하는 모듈
 
 ⚠️ 중요: 모든 이미지는 1200px 너비로 자동 리사이즈됩니다.
-   Gemini API가 정확한 픽셀 크기를 보장하지 않기 때문에
+   이미지 생성 도구가 정확한 픽셀 크기를 보장하지 않기 때문에
    스티칭 전 강제로 1200px로 맞춥니다.
 """
 
@@ -21,7 +21,7 @@ def load_images(image_paths: List[str], target_width: int = FIXED_WIDTH) -> List
     이미지 파일들을 로드하고 지정된 너비로 리사이즈합니다.
 
     ⚠️ 중요: 모든 이미지는 target_width로 강제 리사이즈됩니다.
-    이는 Gemini API가 정확한 픽셀 크기를 생성하지 않기 때문입니다.
+    이는 이미지 생성 도구가 정확한 픽셀 크기를 생성하지 않기 때문입니다.
 
     Args:
         image_paths: 이미지 파일 경로 리스트
@@ -225,3 +225,4 @@ if __name__ == "__main__":
     else:
         print("\nFailed to create final page")
         sys.exit(1)
+
