@@ -97,6 +97,30 @@ if(typeof document!=='undefined') {
     $('backendBadge').textContent=ok?'AI 연결됨':'AI 미연결';
     if(message) $('connectionMessage').textContent=message;
   }
+  function resetProduct() {
+    form.reset();
+    brief=null;
+    sections=[];
+    photo='';
+    photoTask=Promise.resolve();
+    projectFolderId='';
+    projectFolderUrl='';
+    $('photo').value='';
+    $('photoRow').hidden=true;
+    $('photoThumb').removeAttribute('src');
+    $('sections').innerHTML='';
+    $('imageProgress').textContent='';
+    $('empty').hidden=false;
+    $('preview').hidden=true;
+    $('preview').removeAttribute('srcdoc');
+    $('download').disabled=true;
+    $('saveDrive').disabled=true;
+    $('editTab').disabled=true;
+    $('sectionCount').textContent='아직 생성되지 않음';
+    device(false);
+    tab(false);
+    notify('새 상품 입력을 시작합니다. AI·Drive 연결 정보는 그대로 유지됩니다.');
+  }
   async function backendCall(action,payload={}) {
     const cfg=connection();
     if(!cfg.url || !/^https:\/\/script\.google\.com\//.test(cfg.url)) throw new Error('Apps Script 웹앱 URL을 먼저 연결해 주세요.');
@@ -117,6 +141,12 @@ if(typeof document!=='undefined') {
     const btn=$('testConnection'); setBusy(btn,true,'확인 중…');
     try{const data=await backendCall('health');paintConnection(true,`AI ${data.textModel} · 이미지 ${data.imageModel} · Drive /${data.driveFolder}`);notify('AI와 Google Drive 백엔드 연결이 정상입니다.');}
     catch(err){paintConnection(false,err.message);notify(err.message);}finally{setBusy(btn,false);}
+  };
+  $('newProduct').onclick=()=>{
+    const fields=['name','tagline','audience','problem','features','price','url','steps','proof','brand','policy','constraints'];
+    const hasWork=sections.length>0 || Boolean(photo) || fields.some(name=>String(form.elements[name]?.value||'').trim());
+    if(hasWork&&!confirm('현재 상품 입력과 생성 결과를 초기화하고 새 상품을 시작할까요?\nDrive에 이미 저장한 파일은 삭제되지 않습니다.'))return;
+    resetProduct();
   };
 
   function editFields(){
